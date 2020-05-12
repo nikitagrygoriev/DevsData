@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy 
 from flask_marshmallow import Marshmallow 
 import os
+from datetime import datetime, timedelta
+#from datetime import timedelta
 
 
 app = Flask(__name__)
@@ -17,15 +19,15 @@ ma = Marshmallow(app)
 class Event(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   title = db.Column(db.String(100), unique=True)
-  end_date = db.Column(db.Integer)
-  start_date = db.Column(db.Integer)
+  end_date = db.Column(db.Date)
+  start_date = db.Column(db.Date)
   thumbnail = db.Column(db.Integer)
 
   def __init__(self, title, thumbnail, start_date, end_date):
     self.title = title
     self.thumbnail = thumbnail
-    self.start_date = start_date
-    self.end_date = end_date
+    self.start_date = datetime.strptime(start_date, '%m-%d-%Y').date()
+    self.end_date = datetime.strptime(end_date, '%m-%d-%Y').date()
 
 
 class Reservation(db.Model):
@@ -133,13 +135,16 @@ def post_reservation():
 def delete_product():
   auth = request.authorization
   if Client.query.filter_by(id=auth.username).first().manager or \
-  (Reservation.query.filter_by(client_id=auth.username).first() and\
+  (Reservation.query.filter_by(client_id=auth.username).first() and \
     auth.password == Reservation.query.filter_by(client_id=auth.username).first().reservation_code):
-    # reservation = Reservation.query.get(reservation_code)
-    # db.session.delete(reservation)
-    # db.session.commit() 
-    # return reservation_schema.jsonify(reservation)
-      return jsonify({"message":"deleted"})
+  
+    diff = str(Event.query.filter_by(id=2).first().end_date - \
+      Event.query.filter_by(id=2).first().start_date)
+    if str(diff)[0] != '0':
+      reservation = Reservation.query.get(reservation_code)
+      db.session.delete(reservation)
+      db.session.commit() 
+      return reservation_schema.jsonify(reservation)
 
   return jsonify({"message":"you don't have permission to delete"})
 
