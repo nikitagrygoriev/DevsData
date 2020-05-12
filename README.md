@@ -8,4 +8,4 @@
 Almost complete authorization, adding/deleting of events, clients and reservations.
 
 ## TODO:
-Manager status control, GUI.
+Manager status control, GUI, comments.
